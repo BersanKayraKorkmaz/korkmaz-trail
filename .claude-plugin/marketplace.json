@@ -1,0 +1,12 @@
+{
+  "name": "korkmaz-trail",
+  "description": "korkmaz-trail: an audit trail for your AI agent, above the Claude Code prompt.",
+  "owner": { "name": "Berşan Kayra Korkmaz" },
+  "plugins": [
+    {
+      "name": "korkmaz-trail",
+      "source": "./",
+      "description": "An audit trail for your AI agent, above the Claude Code prompt."
+    }
+  ]
+}

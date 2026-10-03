@@ -1,0 +1,23 @@
+{
+  "name": "korkmaz-trail",
+  "version": "0.2.0",
+  "private": true,
+  "description": "A Claude Code mod: an audit trail for your AI agent above the prompt, with commands, file changes, outbound calls and risky actions next to your plan limits, context and cost.",
+  "type": "module",
+  "scripts": {
+    "test": "node --test",
+    "test:mod": "claude plugin test",
+    "validate": "claude plugin validate .claude-plugin/plugin.json && claude plugin validate .",
+    "preview": "node scripts/preview.mjs && node scripts/preview.mjs --lang=tr"
+  },
+  "keywords": [
+    "claude-code",
+    "claude-code-mod",
+    "audit",
+    "security",
+    "ai-agent",
+    "rate-limit"
+  ],
+  "author": "Berşan Kayra Korkmaz",
+  "license": "MIT"
+}

@@ -1,0 +1,4 @@
+{
+  "description": "korkmaz-trail: an audit trail for your AI agent, drawn above the prompt",
+  "modules": ["./register.js"]
+}

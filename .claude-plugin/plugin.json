@@ -1,0 +1,31 @@
+{
+  "name": "korkmaz-trail",
+  "version": "0.2.0",
+  "description": "An audit trail for your AI agent, above the Claude Code prompt: commands, file changes, outbound calls and risky actions next to your plan limits, context and cost.",
+  "author": {
+    "name": "Berşan Kayra Korkmaz"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/BersanKayraKorkmaz/korkmaz-trail",
+  "repository": "https://github.com/BersanKayraKorkmaz/korkmaz-trail",
+  "keywords": [
+    "mod",
+    "audit",
+    "security",
+    "agent",
+    "rate-limit",
+    "status"
+  ],
+  "userConfig": {
+    "language": {
+      "type": "string",
+      "title": "Language",
+      "description": "Language of the bar",
+      "options": [
+        "en",
+        "tr"
+      ],
+      "default": "en"
+    }
+  }
+}
