@@ -1,6 +1,6 @@
 {
   "name": "korkmaz-trail",
-  "version": "0.2.0",
+  "version": "0.3.4",
   "private": true,
   "description": "A Claude Code mod: an audit trail for your AI agent above the prompt, with commands, file changes, outbound calls and risky actions next to your plan limits, context and cost.",
   "type": "module",

@@ -4,14 +4,21 @@
 // ones, and shows them next to your plan limits, context and cost. It only
 // watches: every tool call is passed on unchanged. Nothing leaves your machine.
 import { classifyToolUse } from '../lib/rules.js'
-import { WINDOWS, buildModel, layout, merge, pushSample } from '../lib/bar.js'
+import { STRINGS, WINDOWS, buildModel, chipLine, fit, legend, merge, pushSample, systemLanguage } from '../lib/bar.js'
 
-// Theme colours, so the bar follows the app's light or dark theme.
+// Text colours come from the theme, so they follow the app's light or dark mode.
 const TONES = {
   ok: { color: 'success' },
   watch: { color: 'warning' },
   act: { color: 'error' },
   dim: { dimColor: true },
+}
+// Chip backgrounds are translucent, so they read on light and dark themes alike.
+const TINTS = {
+  ok: 'rgba(47, 163, 107, 0.16)',
+  watch: 'rgba(217, 106, 28, 0.18)',
+  act: 'rgba(224, 68, 62, 0.18)',
+  neutral: 'rgba(127, 127, 127, 0.13)',
 }
 const MAX_RISKS = 50
 const REFRESH_MS = 30000 // keeps the reset countdowns current while idle
@@ -21,7 +28,7 @@ const freshTrail = () => ({ cmds: 0, net: 0, files: new Set(), riskCount: 0, ris
 let trail = freshTrail()
 let usage = null
 let samples = { five_hour: [], seven_day: [] }
-let lang = 'en'
+let lang = systemLanguage()
 
 // Windows paths are case-insensitive; count C:\a.ts and c:/A.ts as one file.
 const normPath = (p) => {
@@ -74,10 +81,20 @@ async function measure($) {
   }
 }
 
-export function register(on, options) {
-  if (options?.language === 'tr' || options?.language === 'en') lang = options.language
+// The language /korkmaz-trail tr|en saved, else the system's.
+async function loadLanguage($) {
+  const saved = await $.store.get('language').catch(() => undefined)
+  lang = STRINGS[saved] ? saved : systemLanguage()
+}
 
+export function register(on) {
   on('session.start', async ($, e, next) => {
+    await $.command.register({
+      name: 'korkmaz-trail',
+      description: 'Explain the bar above the prompt, or switch its language: /korkmaz-trail tr | en',
+      immediate: true,
+    })
+    await loadLanguage($)
     await seed($)
     await measure($)
     $.clock.every(REFRESH_MS, () => $.ui.invalidate('ui.render'))
@@ -89,6 +106,17 @@ export function register(on, options) {
     await seed($)
     $.ui.invalidate('ui.render')
     return next(e)
+  })
+
+  on('command.run', { command: 'korkmaz-trail' }, async ($, e) => {
+    const arg = String(e.args ?? '').trim().toLowerCase()
+    if (STRINGS[arg]) {
+      lang = arg
+      await $.store.set('language', arg)
+      $.ui.invalidate('ui.render')
+      return { text: STRINGS[arg].langSet }
+    }
+    return { text: legend(lang) }
   })
 
   on('tool.call', async ($, e, next) => {
@@ -109,13 +137,30 @@ export function register(on, options) {
     const now = Math.floor((await $.clock.now()) / 1000)
     const model = buildModel({ trail: { ...trail, files: trail.files.size }, usage, samples, now })
     const { Box, Text } = $.ui.resolve(e)
-    const row = Box({
-      key: 'korkmaz-trail',
-      flexDirection: 'row',
-      children: merge(layout(model, e.props.bodyColumns || 0, lang)).map((s) =>
-        Text({ ...(s.tone ? TONES[s.tone] : {}), ...(s.bold ? { bold: true } : {}), children: [s.text] }),
-      ),
-    })
+    const text = (s) => Text({ ...(s.tone ? TONES[s.tone] : {}), ...(s.bold ? { bold: true } : {}), children: [s.text] })
+
+    // The Desktop app gets one chip per fact, wrapping onto more rows when
+    // narrow; the terminal gets the same chips as one line of text.
+    const isDesktop = e.surface === 'desktop'
+    const list = fit(model, e.props.bodyColumns || 0, lang, isDesktop ? 3 : 1)
+    const row = isDesktop
+      ? Box({
+          key: 'korkmaz-trail',
+          flexDirection: 'row',
+          flexWrap: 'wrap',
+          gap: 1,
+          children: list.map((c) =>
+            Box({
+              key: `korkmaz-trail-${c.key}`,
+              flexDirection: 'row',
+              backgroundColor: TINTS[c.tint || 'neutral'],
+              paddingX: 1,
+              children: merge(c.parts).map(text),
+            }),
+          ),
+        })
+      : Box({ key: 'korkmaz-trail', flexDirection: 'row', children: merge(chipLine(list)).map(text) })
+
     // Keep whatever the mods after this one draw in the band.
     const theirs = await next(e)
     return Box({ flexDirection: 'column', children: theirs ? [row, theirs] : [row] })
